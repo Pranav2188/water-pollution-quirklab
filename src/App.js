@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Droplet, AlertTriangle, Heart, Leaf, Factory, Trash2, Users, TrendingUp, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Droplet, AlertTriangle, Heart, Leaf, Factory, Trash2, Users, ExternalLink, ChevronLeft, ChevronRight, Menu, X, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const WaterPollutionWebsite = () => {
@@ -7,6 +7,10 @@ const WaterPollutionWebsite = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [chartData, setChartData] = useState([]);
   const [animationProgress, setAnimationProgress] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [chartDomain, setChartDomain] = useState({ start: 0, end: 24 });
+  const chartContainerRef = useRef(null);
 
   // Full data from 2000 to 2024 based on WHO/UNICEF JMP data
   const fullPollutionData = [
@@ -36,17 +40,6 @@ const WaterPollutionWebsite = () => {
     { year: 2023, unsafeWater: 26.5, plasticOcean: 1.5, diarrheaDeaths: 1080 },
     { year: 2024, unsafeWater: 26, plasticOcean: 1.6, diarrheaDeaths: 1050 }
   ];
-
-  // Floating animation styles
-  const floatingAnimation = `
-    @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(var(--rotate)); }
-      50% { transform: translateY(-20px) rotate(var(--rotate)); }
-    }
-    .float-animate {
-      animation: float ease-in-out infinite;
-    }
-  `;
 
   const pollutionImages = [
     {
@@ -95,11 +88,11 @@ const WaterPollutionWebsite = () => {
         } else {
           clearInterval(animationTimer);
         }
-      }, 150); // Animate over 3 seconds (20 data points * 150ms)
+      }, 150);
       
       return () => clearInterval(animationTimer);
     }
-  }, [activeSection]);
+  }, [activeSection, fullPollutionData.length]);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % pollutionImages.length);
@@ -109,26 +102,89 @@ const WaterPollutionWebsite = () => {
     setCurrentSlide((prev) => (prev - 1 + pollutionImages.length) % pollutionImages.length);
   };
 
+  // Zoom controls for chart
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.5, 3));
+    const center = (chartDomain.start + chartDomain.end) / 2;
+    const newRange = (chartDomain.end - chartDomain.start) / 1.5;
+    setChartDomain({
+      start: Math.max(0, Math.floor(center - newRange / 2)),
+      end: Math.min(24, Math.ceil(center + newRange / 2))
+    });
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.5, 1));
+    if (zoomLevel <= 1.5) {
+      setChartDomain({ start: 0, end: 24 });
+    } else {
+      const center = (chartDomain.start + chartDomain.end) / 2;
+      const newRange = (chartDomain.end - chartDomain.start) * 1.5;
+      setChartDomain({
+        start: Math.max(0, Math.floor(center - newRange / 2)),
+        end: Math.min(24, Math.ceil(center + newRange / 2))
+      });
+    }
+  };
+
+  const handleResetZoom = () => {
+    setZoomLevel(1);
+    setChartDomain({ start: 0, end: 24 });
+  };
+
   const NavBar = () => (
-    <nav className="bg-blue-900 text-white shadow-lg sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
+    <nav className="bg-gradient-to-r from-blue-900 to-blue-700 text-white shadow-lg sticky top-0 z-50">
+      <div className="container mx-auto px-4 py-3 md:py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Droplet className="w-8 h-8" />
-            <h1 className="text-2xl font-bold">Quirk Lab</h1>
+            <Droplet className="w-6 h-6 md:w-8 md:h-8" />
+            <h1 className="text-xl md:text-2xl font-bold">Quirk Lab</h1>
           </div>
-          <div className="flex space-x-6">
+          
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex space-x-6">
             {['home', 'crisis', 'causes', 'solutions', 'microplastics', 'about'].map(section => (
               <button
                 key={section}
                 onClick={() => setActiveSection(section)}
-                className={`hover:text-blue-300 transition capitalize ${activeSection === section ? 'text-blue-300 border-b-2' : ''}`}
+                className={`hover:text-blue-300 transition-smooth capitalize ${activeSection === section ? 'text-blue-300 border-b-2 border-blue-300' : ''}`}
               >
                 {section}
               </button>
             ))}
           </div>
+          
+          {/* Mobile Menu Button */}
+          <button 
+            className="md:hidden p-2 hover:bg-blue-800 rounded-lg transition-smooth"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
+        
+        {/* Mobile Navigation Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden mt-4 pb-4 space-y-2 animate-fade-in">
+            {['home', 'crisis', 'causes', 'solutions', 'microplastics', 'about'].map(section => (
+              <button
+                key={section}
+                onClick={() => {
+                  setActiveSection(section);
+                  setMobileMenuOpen(false);
+                }}
+                className={`block w-full text-left px-4 py-3 rounded-lg capitalize transition-smooth ${
+                  activeSection === section 
+                    ? 'bg-blue-800 text-blue-300 font-semibold' 
+                    : 'hover:bg-blue-800/50'
+                }`}
+              >
+                {section}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -136,7 +192,7 @@ const WaterPollutionWebsite = () => {
   const HomePage = () => (
     <div className="min-h-screen">
       {/* Image Slideshow */}
-      <div className="relative w-full h-96 md:h-128 bg-gray-900 overflow-hidden">
+      <div className="relative w-full h-64 sm:h-80 md:h-96 lg:h-[32rem] bg-gray-900 overflow-hidden">
         {pollutionImages.map((image, index) => (
           <div
             key={index}
@@ -149,9 +205,9 @@ const WaterPollutionWebsite = () => {
               className="w-full h-full bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${image.url})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-8 md:p-12">
-                <h3 className="text-white text-3xl md:text-4xl font-bold mb-2 drop-shadow-lg">{image.title}</h3>
-                <p className="text-white text-lg md:text-xl drop-shadow-lg">{image.description}</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent flex flex-col justify-end p-4 sm:p-6 md:p-8 lg:p-12">
+                <h3 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-1 sm:mb-2 drop-shadow-lg">{image.title}</h3>
+                <p className="text-white text-sm sm:text-base md:text-lg lg:text-xl drop-shadow-lg">{image.description}</p>
               </div>
             </div>
           </div>
@@ -160,15 +216,17 @@ const WaterPollutionWebsite = () => {
         {/* Navigation Buttons */}
         <button
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition"
+          className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/75 rounded-full p-1.5 sm:p-2 transition-smooth"
+          aria-label="Previous slide"
         >
-          <ChevronLeft className="w-6 h-6 text-gray-800" />
+          <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition"
+          className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-white/50 hover:bg-white/75 rounded-full p-1.5 sm:p-2 transition-smooth"
+          aria-label="Next slide"
         >
-          <ChevronRight className="w-6 h-6 text-gray-800" />
+          <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6 text-gray-800" />
         </button>
 
         {/* Slide Indicators */}
@@ -177,189 +235,64 @@ const WaterPollutionWebsite = () => {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`w-3 h-3 rounded-full transition ${
-                index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+              className={`w-3 h-3 rounded-full transition-smooth ${
+                index === currentSlide ? 'bg-white' : 'bg-white/50'
               }`}
             />
           ))}
         </div>
       </div>
 
-      <div className="relative bg-gradient-to-br from-blue-600 to-blue-900 text-white py-32 overflow-hidden">
-        {/* Animated Newspaper Cutouts Background with Real Images */}
-        <div className="absolute inset-0 overflow-hidden">
-          {/* Newspaper Cutout 1 - Ganga Pollution */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              top: '10%', 
-              left: '5%',
-              '--rotate': '12deg',
-              animationDuration: '6s',
-              animationDelay: '0s'
-            }}
-          >
-            <div className="w-72 h-52 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=400&fit=crop&q=80" 
-                alt="Ganga pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Ganga River Crisis</p>
+      <div className="relative bg-gradient-to-br from-blue-600 to-blue-900 text-white py-16 sm:py-24 md:py-32 overflow-hidden">
+        {/* Animated Newspaper Cutouts Background - Hidden on mobile for performance */}
+        <div className="hidden sm:block absolute inset-0 overflow-hidden opacity-30">
+          {[
+            { top: '10%', left: '5%', rotate: '12deg', delay: '0s', duration: '6s', img: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=400&fit=crop&q=80', title: 'Ganga River Crisis' },
+            { top: '15%', right: '8%', rotate: '-6deg', delay: '1s', duration: '7s', img: 'https://images.unsplash.com/photo-1583475092727-5a07f10eee25?w=500&h=400&fit=crop&q=80', title: 'Yamuna: Delhi\'s Toxic River' },
+            { top: '45%', left: '10%', rotate: '-12deg', delay: '2s', duration: '6.5s', img: 'https://images.unsplash.com/photo-1621451537084-482c73073a0f?w=500&h=400&fit=crop&q=80', title: 'Industrial Waste Kills Rivers' },
+            { top: '50%', right: '12%', rotate: '6deg', delay: '0.5s', duration: '7.5s', img: 'https://images.unsplash.com/photo-1605600659908-0ef719419d41?w=500&h=400&fit=crop&q=80', title: 'Plastic Chokes Indian Waters' },
+            { bottom: '10%', left: '15%', rotate: '3deg', delay: '1.5s', duration: '6.8s', img: 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&h=400&fit=crop&q=80', title: 'Untreated Sewage Emergency' },
+            { bottom: '15%', right: '10%', rotate: '-8deg', delay: '2.5s', duration: '7.2s', img: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=500&h=400&fit=crop&q=80', title: 'Mumbai Beaches Contaminated' },
+            { top: '30%', left: '28%', rotate: '15deg', delay: '0.8s', duration: '6.3s', img: 'https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=400&fit=crop&q=80', title: 'Indian Lakes Turn Toxic' },
+          ].map((item, i) => (
+            <div 
+              key={i}
+              className="absolute float-animate"
+              style={{ 
+                top: item.top,
+                left: item.left,
+                right: item.right,
+                bottom: item.bottom,
+                // @ts-ignore
+                '--rotate': item.rotate,
+                animationDuration: item.duration,
+                animationDelay: item.delay
+              }}
+            >
+              <div className="w-72 h-52 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
+                <img 
+                  src={item.img}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
+                  <p className="text-white text-sm font-bold">{item.title}</p>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Newspaper Cutout 2 - Yamuna Pollution */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              top: '15%', 
-              right: '8%',
-              '--rotate': '-6deg',
-              animationDuration: '7s',
-              animationDelay: '1s'
-            }}
-          >
-            <div className="w-80 h-56 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1583475092727-5a07f10eee25?w=500&h=400&fit=crop&q=80" 
-                alt="Yamuna pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Yamuna: Delhi's Toxic River</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Newspaper Cutout 3 - Industrial Waste */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              top: '45%', 
-              left: '10%',
-              '--rotate': '-12deg',
-              animationDuration: '6.5s',
-              animationDelay: '2s'
-            }}
-          >
-            <div className="w-68 h-48 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1621451537084-482c73073a0f?w=500&h=400&fit=crop&q=80" 
-                alt="Industrial pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Industrial Waste Kills Rivers</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Newspaper Cutout 4 - Plastic Pollution */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              top: '50%', 
-              right: '12%',
-              '--rotate': '6deg',
-              animationDuration: '7.5s',
-              animationDelay: '0.5s'
-            }}
-          >
-            <div className="w-76 h-54 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1605600659908-0ef719419d41?w=500&h=400&fit=crop&q=80" 
-                alt="Plastic pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Plastic Chokes Indian Waters</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Newspaper Cutout 5 - Sewage Crisis */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              bottom: '10%', 
-              left: '15%',
-              '--rotate': '3deg',
-              animationDuration: '6.8s',
-              animationDelay: '1.5s'
-            }}
-          >
-            <div className="w-70 h-50 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1530587191325-3db32d826c18?w=500&h=400&fit=crop&q=80" 
-                alt="Sewage pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Untreated Sewage Emergency</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Newspaper Cutout 6 - Mumbai Beach Pollution */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              bottom: '15%', 
-              right: '10%',
-              '--rotate': '-8deg',
-              animationDuration: '7.2s',
-              animationDelay: '2.5s'
-            }}
-          >
-            <div className="w-72 h-52 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=500&h=400&fit=crop&q=80" 
-                alt="Beach pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Mumbai Beaches Contaminated</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Newspaper Cutout 7 - Lake Pollution */}
-          <div 
-            className="absolute opacity-25 float-animate"
-            style={{ 
-              top: '30%', 
-              left: '28%',
-              '--rotate': '15deg',
-              animationDuration: '6.3s',
-              animationDelay: '0.8s'
-            }}
-          >
-            <div className="w-66 h-46 bg-white rounded-lg shadow-2xl overflow-hidden border-4 border-white">
-              <img 
-                src="https://images.unsplash.com/photo-1611273426858-450d8e3c9fce?w=500&h=400&fit=crop&q=80" 
-                alt="Lake pollution"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex items-end p-3">
-                <p className="text-white text-sm font-bold">Indian Lakes Turn Toxic</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="container mx-auto px-4 text-center relative z-10">
-          <h1 className="text-6xl font-bold mb-6">Water Pollution</h1>
-          <p className="text-3xl mb-8">A Silent Crisis</p>
-          <p className="text-xl max-w-3xl mx-auto mb-12">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6">Water Pollution</h1>
+          <p className="text-xl sm:text-2xl md:text-3xl mb-6 sm:mb-8">A Silent Crisis</p>
+          <p className="text-base sm:text-lg md:text-xl max-w-3xl mx-auto mb-8 sm:mb-12">
             Water is essential for life, but pollution is rapidly making clean water scarce. 
             Join us in understanding and combating this critical environmental challenge.
           </p>
           <button 
             onClick={() => setActiveSection('crisis')}
-            className="bg-white text-blue-900 px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-100 transition"
+            className="bg-white text-blue-900 px-6 sm:px-8 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-blue-100 transition-smooth shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
           >
             Learn More
           </button>
@@ -367,22 +300,59 @@ const WaterPollutionWebsite = () => {
       </div>
 
       {/* Dynamic Line Chart Section */}
-      <div className="bg-gradient-to-br from-red-50 to-orange-50 py-16">
+      <div className="bg-gradient-to-br from-red-50 to-orange-50 py-8 sm:py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center mb-4 text-red-800">The Rising Crisis: Global Water Data (2000-2024)</h2>
-          <p className="text-center text-gray-700 mb-8 text-lg max-w-3xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3 sm:mb-4 text-red-800">The Rising Crisis: Global Water Data (2000-2024)</h2>
+          <p className="text-center text-gray-700 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg max-w-3xl mx-auto px-4">
             Real-world data from WHO/UNICEF JMP showing the alarming trends in water pollution and health impacts over the past two decades.
           </p>
           
-          <div className="bg-white p-8 rounded-lg shadow-2xl max-w-6xl mx-auto">
-            <ResponsiveContainer width="100%" height={450}>
-              <LineChart data={chartData}>
+          <div className="bg-white p-4 sm:p-6 md:p-8 rounded-lg shadow-2xl max-w-6xl mx-auto">
+            {/* Zoom Controls - Visible on mobile */}
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleZoomIn}
+                  disabled={zoomLevel >= 3}
+                  className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-smooth text-sm shadow-md active:scale-95"
+                  aria-label="Zoom in"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span className="hidden sm:inline">Zoom In</span>
+                </button>
+                <button
+                  onClick={handleZoomOut}
+                  disabled={zoomLevel <= 1}
+                  className="flex items-center gap-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-smooth text-sm shadow-md active:scale-95"
+                  aria-label="Zoom out"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                  <span className="hidden sm:inline">Zoom Out</span>
+                </button>
+                <button
+                  onClick={handleResetZoom}
+                  disabled={zoomLevel === 1}
+                  className="flex items-center gap-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-smooth text-sm shadow-md active:scale-95"
+                  aria-label="Reset zoom"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              </div>
+              <div className="text-xs sm:text-sm text-gray-600 font-medium">
+                Zoom: {zoomLevel.toFixed(1)}x
+              </div>
+            </div>
+
+            <div ref={chartContainerRef} className="overflow-x-auto">
+              <ResponsiveContainer width="100%" height={window.innerWidth < 640 ? 300 : window.innerWidth < 768 ? 350 : 450}>
+                <LineChart data={chartData.slice(chartDomain.start, chartDomain.end + 1)}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis 
                   dataKey="year" 
                   stroke="#666"
-                  style={{ fontSize: '14px', fontWeight: 'bold' }}
-                  label={{ value: 'Year', position: 'insideBottom', offset: -5 }}
+                  style={{ fontSize: window.innerWidth < 640 ? '10px' : '14px', fontWeight: 'bold' }}
+                  label={{ value: 'Year', position: 'insideBottom', offset: -5, style: { fontSize: window.innerWidth < 640 ? '10px' : '12px' } }}
                 />
                 <YAxis 
                   yAxisId="left"
@@ -420,10 +390,10 @@ const WaterPollutionWebsite = () => {
                   type="monotone" 
                   dataKey="unsafeWater" 
                   stroke="#ef4444" 
-                  strokeWidth={3}
+                  strokeWidth={zoomLevel > 1.5 ? 4 : 3}
                   name="People without Safe Water (%)"
-                  dot={{ fill: '#ef4444', r: 3 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ fill: '#ef4444', r: zoomLevel > 1.5 ? 4 : 3 }}
+                  activeDot={{ r: zoomLevel > 1.5 ? 8 : 6 }}
                   animationDuration={300}
                 />
                 <Line 
@@ -431,10 +401,10 @@ const WaterPollutionWebsite = () => {
                   type="monotone" 
                   dataKey="plasticOcean" 
                   stroke="#3b82f6" 
-                  strokeWidth={3}
+                  strokeWidth={zoomLevel > 1.5 ? 4 : 3}
                   name="Plastic to Ocean (Million tonnes)"
-                  dot={{ fill: '#3b82f6', r: 3 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ fill: '#3b82f6', r: zoomLevel > 1.5 ? 4 : 3 }}
+                  activeDot={{ r: zoomLevel > 1.5 ? 8 : 6 }}
                   animationDuration={300}
                 />
                 <Line 
@@ -442,16 +412,24 @@ const WaterPollutionWebsite = () => {
                   type="monotone" 
                   dataKey="diarrheaDeaths" 
                   stroke="#f59e0b" 
-                  strokeWidth={3}
+                  strokeWidth={zoomLevel > 1.5 ? 4 : 3}
                   name="Diarrhea Deaths (thousands)"
-                  dot={{ fill: '#f59e0b', r: 3 }}
-                  activeDot={{ r: 6 }}
+                  dot={{ fill: '#f59e0b', r: zoomLevel > 1.5 ? 4 : 3 }}
+                  activeDot={{ r: zoomLevel > 1.5 ? 8 : 6 }}
                   animationDuration={300}
                 />
               </LineChart>
             </ResponsiveContainer>
+            </div>
             
-            <div className="mt-8 grid md:grid-cols-3 gap-4">
+            {/* Zoom Instructions for mobile */}
+            <div className="mt-4 text-center sm:hidden">
+              <p className="text-xs text-gray-500 italic">
+                💡 Tip: Use zoom buttons above or swipe horizontally to explore data
+              </p>
+            </div>
+            
+            <div className="mt-6 sm:mt-8 grid sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
               <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
                 <h4 className="font-bold text-red-800 mb-2 flex items-center">
                   <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
@@ -494,11 +472,11 @@ const WaterPollutionWebsite = () => {
             </div>
           </div>
 
-          <div className="text-center mt-8">
-            <p className="text-xl font-semibold text-gray-800">
+          <div className="text-center mt-6 sm:mt-8 px-4">
+            <p className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
               Data Animation Progress: Year {chartData.length > 0 ? chartData[chartData.length - 1].year : 2000}
             </p>
-            <div className="w-full max-w-2xl mx-auto mt-4 bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div className="w-full max-w-2xl mx-auto mt-3 sm:mt-4 bg-gray-200 rounded-full h-2 sm:h-3 overflow-hidden">
               <div 
                 className="bg-gradient-to-r from-red-500 to-orange-500 h-full rounded-full transition-all duration-300"
                 style={{ width: `${(animationProgress / fullPollutionData.length) * 100}%` }}
@@ -508,10 +486,10 @@ const WaterPollutionWebsite = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-16">
-        <h2 className="text-4xl font-bold text-center mb-12">Why This Matters</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="bg-white p-8 rounded-lg shadow-lg">
+      <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12">Why This Matters</h2>
+        <div className="grid sm:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
             <Heart className="w-12 h-12 text-red-500 mb-4" />
             <h3 className="text-2xl font-bold mb-4">Basic Human Need</h3>
             <p className="text-gray-700">
@@ -519,7 +497,7 @@ const WaterPollutionWebsite = () => {
               and Yamuna hold cultural significance but face severe pollution.
             </p>
           </div>
-          <div className="bg-white p-8 rounded-lg shadow-lg">
+          <div className="bg-white p-8 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
             <AlertTriangle className="w-12 h-12 text-yellow-500 mb-4" />
             <h3 className="text-2xl font-bold mb-4">Health Crisis</h3>
             <p className="text-gray-700">
@@ -533,29 +511,29 @@ const WaterPollutionWebsite = () => {
   );
 
   const CrisisPage = () => (
-    <div className="container mx-auto px-4 py-16">
-      <h1 className="text-5xl font-bold text-center mb-12 text-blue-900">India's Water Crisis</h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 text-blue-900">India's Water Crisis</h1>
       
-      <div className="grid md:grid-cols-2 gap-8 mb-16">
-        <div className="bg-red-50 p-8 rounded-lg">
+      <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <div className="bg-red-50 p-8 rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold mb-6 text-red-700">Sources of Pollution</h2>
           <div className="space-y-4">
             <div className="flex items-start space-x-3">
-              <Factory className="w-6 h-6 text-red-600 mt-1" />
+              <Factory className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
               <div>
                 <h3 className="font-bold">Industrial Waste</h3>
                 <p className="text-gray-700">Toxic chemicals and heavy metals discharged into rivers</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Trash2 className="w-6 h-6 text-red-600 mt-1" />
+              <Trash2 className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
               <div>
                 <h3 className="font-bold">Raw Sewage</h3>
                 <p className="text-gray-700">Untreated household waste dumped directly into water bodies</p>
               </div>
             </div>
             <div className="flex items-start space-x-3">
-              <Leaf className="w-6 h-6 text-red-600 mt-1" />
+              <Leaf className="w-6 h-6 text-red-600 mt-1 flex-shrink-0" />
               <div>
                 <h3 className="font-bold">Agricultural Runoff</h3>
                 <p className="text-gray-700">Pesticides and fertilizers contaminating rivers</p>
@@ -564,7 +542,7 @@ const WaterPollutionWebsite = () => {
           </div>
         </div>
 
-        <div className="bg-blue-50 p-8 rounded-lg">
+        <div className="bg-blue-50 p-8 rounded-lg shadow-lg">
           <h2 className="text-3xl font-bold mb-6 text-blue-700">Consequences</h2>
           <div className="space-y-4">
             <div className="p-4 bg-white rounded shadow">
@@ -583,7 +561,7 @@ const WaterPollutionWebsite = () => {
         </div>
       </div>
 
-      <div className="bg-yellow-50 p-8 rounded-lg mb-8">
+      <div className="bg-yellow-50 p-8 rounded-lg mb-8 shadow-lg">
         <h2 className="text-3xl font-bold mb-6 text-yellow-800">Real-Life Examples</h2>
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-lg shadow">
@@ -604,11 +582,11 @@ const WaterPollutionWebsite = () => {
   );
 
   const CausesPage = () => (
-    <div className="container mx-auto px-4 py-16">
-      <h1 className="text-5xl font-bold text-center mb-12 text-blue-900">Major Causes of Water Pollution</h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 text-blue-900">Major Causes of Water Pollution</h1>
       
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <Factory className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Industrial Waste</h3>
           <p className="text-gray-700">
@@ -616,7 +594,7 @@ const WaterPollutionWebsite = () => {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <Trash2 className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Sewage & Wastewater</h3>
           <p className="text-gray-700">
@@ -624,7 +602,7 @@ const WaterPollutionWebsite = () => {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <AlertTriangle className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Plastic & Garbage</h3>
           <p className="text-gray-700">
@@ -632,7 +610,7 @@ const WaterPollutionWebsite = () => {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <Leaf className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Agricultural Chemicals</h3>
           <p className="text-gray-700">
@@ -640,7 +618,7 @@ const WaterPollutionWebsite = () => {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <Droplet className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Oil Spills</h3>
           <p className="text-gray-700">
@@ -648,7 +626,7 @@ const WaterPollutionWebsite = () => {
           </p>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition">
+        <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-smooth">
           <Users className="w-16 h-16 text-gray-600 mb-4 mx-auto" />
           <h3 className="text-xl font-bold mb-4 text-center">Lack of Awareness</h3>
           <p className="text-gray-700">
@@ -657,7 +635,7 @@ const WaterPollutionWebsite = () => {
         </div>
       </div>
 
-      <div className="bg-red-50 p-8 rounded-lg">
+      <div className="bg-red-50 p-8 rounded-lg shadow-lg">
         <h2 className="text-3xl font-bold mb-6 text-center text-red-800">Challenges in Solving Pollution</h2>
         <ul className="space-y-3 max-w-3xl mx-auto">
           <li className="flex items-start space-x-3">
@@ -686,8 +664,8 @@ const WaterPollutionWebsite = () => {
   );
 
   const SolutionsPage = () => (
-    <div className="container mx-auto px-4 py-16">
-      <h1 className="text-5xl font-bold text-center mb-12 text-green-800">Solutions to Control Water Pollution</h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 text-green-800">Solutions to Control Water Pollution</h1>
       
       <div className="space-y-8 mb-16">
         <div className="bg-green-50 p-8 rounded-lg shadow-lg">
@@ -764,7 +742,7 @@ const WaterPollutionWebsite = () => {
         </div>
       </div>
 
-      <div className="bg-yellow-50 p-8 rounded-lg mb-8">
+      <div className="bg-yellow-50 p-8 rounded-lg mb-8 shadow-lg">
         <h2 className="text-3xl font-bold mb-6 text-center">How China Tackles Water Pollution</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded shadow">
@@ -790,7 +768,7 @@ const WaterPollutionWebsite = () => {
         </div>
       </div>
 
-      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-8 rounded-lg text-center">
+      <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-8 rounded-lg text-center shadow-xl">
         <h2 className="text-3xl font-bold mb-4">Let's Protect Our Rivers!</h2>
         <p className="text-xl">Every action counts. Be the solution to water pollution.</p>
       </div>
@@ -798,8 +776,8 @@ const WaterPollutionWebsite = () => {
   );
 
   const MicroplasticsPage = () => (
-    <div className="container mx-auto px-4 py-16">
-      <h1 className="text-5xl font-bold text-center mb-12 text-purple-900">Understanding Microplastics</h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 text-purple-900">Understanding Microplastics</h1>
       
       <div className="max-w-4xl mx-auto">
         <div className="bg-purple-50 p-8 rounded-lg shadow-lg mb-8">
@@ -845,8 +823,8 @@ const WaterPollutionWebsite = () => {
   );
 
   const AboutPage = () => (
-    <div className="container mx-auto px-4 py-16">
-      <h1 className="text-5xl font-bold text-center mb-12 text-blue-900">About Quirk Lab</h1>
+    <div className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-8 sm:mb-12 text-blue-900">About Quirk Lab</h1>
       
       <div className="max-w-4xl mx-auto">
         <div className="bg-blue-50 p-8 rounded-lg shadow-lg mb-8">
@@ -864,26 +842,12 @@ const WaterPollutionWebsite = () => {
         <div className="bg-white p-8 rounded-lg shadow-lg mb-8">
           <h2 className="text-2xl font-bold mb-4 text-center">Team Members</h2>
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="p-4 bg-blue-50 rounded">
-              <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <p className="font-semibold">Pranav Patil</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded">
-              <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <p className="font-semibold">Soham Pandarkar</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded">
-              <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <p className="font-semibold">Prachit Patil</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded">
-              <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <p className="font-semibold">Ayush Patil</p>
-            </div>
-            <div className="p-4 bg-blue-50 rounded">
-              <Users className="w-8 h-8 text-blue-600 mb-2" />
-              <p className="font-semibold">Omkar Mankar</p>
-            </div>
+            {['Pranav Patil', 'Soham Pandarkar', 'Prachit Patil', 'Ayush Patil', 'Omkar Mankar'].map((name) => (
+              <div key={name} className="p-4 bg-blue-50 rounded flex items-center space-x-3">
+                <Users className="w-8 h-8 text-blue-600" />
+                <p className="font-semibold">{name}</p>
+              </div>
+            ))}
           </div>
           <div className="mt-6 text-center">
             <p className="text-lg"><strong>Project Guide:</strong> Prof. Deepika Upadhyay</p>
@@ -901,9 +865,9 @@ const WaterPollutionWebsite = () => {
           </div>
         </div>
 
-        <div className="mt-12 text-center">
-          <h2 className="text-3xl font-bold mb-4">Our Conclusion</h2>
-          <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-8 rounded-lg">
+        <div className="mt-8 sm:mt-12 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4">Our Conclusion</h2>
+          <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white p-8 rounded-lg shadow-xl">
             <p className="text-xl mb-4">
               Water pollution is not just an environmental issue – it's a life issue. 
               It affects our health, food, economy, and future.
@@ -922,7 +886,6 @@ const WaterPollutionWebsite = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <style>{floatingAnimation}</style>
       <NavBar />
       
       {activeSection === 'home' && <HomePage />}
@@ -932,12 +895,12 @@ const WaterPollutionWebsite = () => {
       {activeSection === 'microplastics' && <MicroplasticsPage />}
       {activeSection === 'about' && <AboutPage />}
 
-      <footer className="bg-blue-900 text-white py-8 mt-16">
+      <footer className="bg-gradient-to-r from-blue-900 to-blue-700 text-white py-6 sm:py-8 mt-12 sm:mt-16">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-lg mb-2">Quirk Lab - Water Pollution Awareness Project</p>
-          <p>Dhole Patil College of Engineering | Department of Information Technology</p>
-          <p className="mt-4 text-sm">Academic Year 2025-26 | Project Review-I</p>
-          <p className="mt-4 font-bold">Let's Protect Our Rivers Together!</p>
+          <p className="text-base sm:text-lg mb-2">Quirk Lab - Water Pollution Awareness Project</p>
+          <p className="text-sm sm:text-base">Dhole Patil College of Engineering | Department of Information Technology</p>
+          <p className="mt-3 sm:mt-4 text-xs sm:text-sm">Academic Year 2025-26 | Project Review-I</p>
+          <p className="mt-3 sm:mt-4 font-bold text-sm sm:text-base">Let's Protect Our Rivers Together!</p>
         </div>
       </footer>
     </div>
