@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/water-pollution-quirklab/static/css/main.e5626225.css",
-    "main.js": "/water-pollution-quirklab/static/js/main.cf3fb438.js",
+    "main.css": "/water-pollution-quirklab/static/css/main.0a1ab6d0.css",
+    "main.js": "/water-pollution-quirklab/static/js/main.09ce6bdd.js",
     "static/js/453.e8d2036a.chunk.js": "/water-pollution-quirklab/static/js/453.e8d2036a.chunk.js",
     "index.html": "/water-pollution-quirklab/index.html",
-    "main.e5626225.css.map": "/water-pollution-quirklab/static/css/main.e5626225.css.map",
-    "main.cf3fb438.js.map": "/water-pollution-quirklab/static/js/main.cf3fb438.js.map",
+    "main.0a1ab6d0.css.map": "/water-pollution-quirklab/static/css/main.0a1ab6d0.css.map",
+    "main.09ce6bdd.js.map": "/water-pollution-quirklab/static/js/main.09ce6bdd.js.map",
     "453.e8d2036a.chunk.js.map": "/water-pollution-quirklab/static/js/453.e8d2036a.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.e5626225.css",
-    "static/js/main.cf3fb438.js"
+    "static/css/main.0a1ab6d0.css",
+    "static/js/main.09ce6bdd.js"
   ]
 }
