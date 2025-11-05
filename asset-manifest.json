@@ -1,15 +1,31 @@
 {
   "files": {
-    "main.css": "/water-pollution-quirklab/static/css/main.0a1ab6d0.css",
-    "main.js": "/water-pollution-quirklab/static/js/main.09ce6bdd.js",
-    "static/js/453.e8d2036a.chunk.js": "/water-pollution-quirklab/static/js/453.e8d2036a.chunk.js",
+    "main.css": "/water-pollution-quirklab/static/css/main.7be6a074.css",
+    "main.js": "/water-pollution-quirklab/static/js/main.0e30af13.js",
+    "static/js/632.5457a34e.chunk.js": "/water-pollution-quirklab/static/js/632.5457a34e.chunk.js",
+    "static/js/228.6182d74e.chunk.js": "/water-pollution-quirklab/static/js/228.6182d74e.chunk.js",
+    "static/js/41.bbc44c01.chunk.js": "/water-pollution-quirklab/static/js/41.bbc44c01.chunk.js",
+    "static/js/375.634386bd.chunk.js": "/water-pollution-quirklab/static/js/375.634386bd.chunk.js",
+    "static/js/894.a40727e3.chunk.js": "/water-pollution-quirklab/static/js/894.a40727e3.chunk.js",
+    "static/js/338.509bd3f6.chunk.js": "/water-pollution-quirklab/static/js/338.509bd3f6.chunk.js",
+    "static/js/175.e441ff06.chunk.js": "/water-pollution-quirklab/static/js/175.e441ff06.chunk.js",
+    "static/js/678.fe85e33b.chunk.js": "/water-pollution-quirklab/static/js/678.fe85e33b.chunk.js",
+    "static/js/540.d17d111d.chunk.js": "/water-pollution-quirklab/static/js/540.d17d111d.chunk.js",
     "index.html": "/water-pollution-quirklab/index.html",
-    "main.0a1ab6d0.css.map": "/water-pollution-quirklab/static/css/main.0a1ab6d0.css.map",
-    "main.09ce6bdd.js.map": "/water-pollution-quirklab/static/js/main.09ce6bdd.js.map",
-    "453.e8d2036a.chunk.js.map": "/water-pollution-quirklab/static/js/453.e8d2036a.chunk.js.map"
+    "main.7be6a074.css.map": "/water-pollution-quirklab/static/css/main.7be6a074.css.map",
+    "main.0e30af13.js.map": "/water-pollution-quirklab/static/js/main.0e30af13.js.map",
+    "632.5457a34e.chunk.js.map": "/water-pollution-quirklab/static/js/632.5457a34e.chunk.js.map",
+    "228.6182d74e.chunk.js.map": "/water-pollution-quirklab/static/js/228.6182d74e.chunk.js.map",
+    "41.bbc44c01.chunk.js.map": "/water-pollution-quirklab/static/js/41.bbc44c01.chunk.js.map",
+    "375.634386bd.chunk.js.map": "/water-pollution-quirklab/static/js/375.634386bd.chunk.js.map",
+    "894.a40727e3.chunk.js.map": "/water-pollution-quirklab/static/js/894.a40727e3.chunk.js.map",
+    "338.509bd3f6.chunk.js.map": "/water-pollution-quirklab/static/js/338.509bd3f6.chunk.js.map",
+    "175.e441ff06.chunk.js.map": "/water-pollution-quirklab/static/js/175.e441ff06.chunk.js.map",
+    "678.fe85e33b.chunk.js.map": "/water-pollution-quirklab/static/js/678.fe85e33b.chunk.js.map",
+    "540.d17d111d.chunk.js.map": "/water-pollution-quirklab/static/js/540.d17d111d.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.0a1ab6d0.css",
-    "static/js/main.09ce6bdd.js"
+    "static/css/main.7be6a074.css",
+    "static/js/main.0e30af13.js"
   ]
 }
