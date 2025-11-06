@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/water-pollution-quirklab/static/css/main.caff0b28.css",
-    "main.js": "/water-pollution-quirklab/static/js/main.a51e49d1.js",
+    "main.css": "/water-pollution-quirklab/static/css/main.a491af94.css",
+    "main.js": "/water-pollution-quirklab/static/js/main.a6e9965c.js",
     "index.html": "/water-pollution-quirklab/index.html",
-    "main.caff0b28.css.map": "/water-pollution-quirklab/static/css/main.caff0b28.css.map",
-    "main.a51e49d1.js.map": "/water-pollution-quirklab/static/js/main.a51e49d1.js.map"
+    "main.a491af94.css.map": "/water-pollution-quirklab/static/css/main.a491af94.css.map",
+    "main.a6e9965c.js.map": "/water-pollution-quirklab/static/js/main.a6e9965c.js.map"
   },
   "entrypoints": [
-    "static/css/main.caff0b28.css",
-    "static/js/main.a51e49d1.js"
+    "static/css/main.a491af94.css",
+    "static/js/main.a6e9965c.js"
   ]
 }
